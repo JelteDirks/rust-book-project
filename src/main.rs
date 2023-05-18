@@ -14,15 +14,15 @@ fn main() {
     let t_pool = ThreadPool::new(6).expect("thread pool creation");
 
     for stream in tcp_listener.unwrap().incoming() {
-        let mut stream = stream.unwrap();
+        let stream = stream.unwrap();
 
-        t_pool.handle(move || {
-            handle_connection(&mut stream);
+        t_pool.handle(|| {
+            handle_connection(stream);
         });
     }
 }
 
-fn handle_connection(mut stream: &TcpStream) {
+fn handle_connection(mut stream: TcpStream) {
     let reader = BufReader::new(&mut stream);
     let request_line = reader.lines().next().unwrap().unwrap();
 
@@ -35,7 +35,7 @@ fn handle_connection(mut stream: &TcpStream) {
     }
 }
 
-fn handle_sleep(mut stream: &TcpStream) {
+fn handle_sleep(mut stream: TcpStream) {
     std::thread::sleep(Duration::from_secs(5));
     let status_line = "HTTP/1.1 200 OK";
     let content = std::fs::read_to_string("index.html").expect("index read");
@@ -45,7 +45,7 @@ fn handle_sleep(mut stream: &TcpStream) {
         .expect("response sleep")
 }
 
-fn handle_404(mut stream: &TcpStream) {
+fn handle_404(mut stream: TcpStream) {
     let status_line = "HTTP/1.1 404 NOT FOUND";
     let content = std::fs::read_to_string("404.html").expect("404 read");
     let response = format_response(status_line, &content);
@@ -53,7 +53,7 @@ fn handle_404(mut stream: &TcpStream) {
     stream.write_all(response.as_bytes()).expect("response msg");
 }
 
-fn handle_root(mut stream: &TcpStream) {
+fn handle_root(mut stream: TcpStream) {
     let status_line = "HTTP/1.1 200 OK";
     let content = std::fs::read_to_string("index.html").expect("index read");
     let response = format_response(status_line, &content);

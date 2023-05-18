@@ -13,26 +13,37 @@ fn main() {
         println!("connected to {ADDRESS}");
 
         handle_connection(&mut stream);
-
-        let status_line = "HTTP/1.1 200 OK";
-        let content = std::fs::read_to_string("index.html").expect("index read");
-        let content_length = content.len();
-        let headers = format!("Content-Length: {content_length}\r\n");
-
-        let response = format!("{status_line}\r\n{headers}\r\n{content}");
-
-        stream.write_all(response.as_bytes()).expect("response msg");
     }
 }
 
 fn handle_connection(mut stream: &TcpStream) {
     let reader = BufReader::new(&mut stream);
-    let http_req: Vec<_> = reader
-        .lines()
-        .map(|result| result.unwrap())
-        .take_while(|line| !line.is_empty())
-        .collect();
+    let request_line = reader.lines().next().unwrap().unwrap();
 
-    println!("incoming request:");
-    println!("{:#?}", http_req);
+    if request_line == "GET / HTTP/1.1" {
+        handle_root(stream);
+    } else if request_line.ends_with("HTTP/1.1") {
+        handle_404(stream);
+    }
+
+}
+
+fn handle_404(mut stream: &TcpStream) {
+    let status_line = "HTTP/1.1 404 NOT FOUND";
+    let content = std::fs::read_to_string("404.html").expect("404 read");
+    let content_length = content.len();
+    let headers = format!("Content-Length: {content_length}\r\n");
+    let response = format!("{status_line}\r\n{headers}\r\n{content}");
+
+    stream.write_all(response.as_bytes()).expect("response msg");
+}
+
+fn handle_root(mut stream: &TcpStream) {
+    let status_line = "HTTP/1.1 200 OK";
+    let content = std::fs::read_to_string("index.html").expect("index read");
+    let content_length = content.len();
+    let headers = format!("Content-Length: {content_length}\r\n");
+    let response = format!("{status_line}\r\n{headers}\r\n{content}");
+
+    stream.write_all(response.as_bytes()).expect("response msg");
 }

@@ -8,8 +8,10 @@ pub struct ThreadPool {
     sender: mpsc::Sender<Job>,
 }
 
+/// Possible errors while creating a ThreadPool.
 #[derive(Debug)]
 pub enum PoolCreationError {
+    /// The amount of threads that are asked for is not supported or is 0.
     UnsupportedAmount,
 }
 
@@ -40,6 +42,12 @@ impl ThreadPool {
         });
     }
 
+    /// Schedule a job on one of the available threads.
+    ///
+    /// # Panics
+    /// The ThreadPool uses channels behind a mutex to send jobs to workers. If
+    /// one of the task scheduled panics the mutex is poisoned and the server
+    /// will panic on locking the mutex.
     pub fn handle<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
@@ -65,9 +73,9 @@ impl Worker {
 
             let job = receiver
                 .lock()
-                .expect("lock receiver")
+                .unwrap()
                 .recv()
-                .expect("receive message");
+                .unwrap();
 
             println!("Worker {id} got a job");
 

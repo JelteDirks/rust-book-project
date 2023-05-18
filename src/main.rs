@@ -1,6 +1,6 @@
 use std::{
     io::{BufRead, BufReader, Write},
-    net::{TcpListener, TcpStream},
+    net::{TcpListener, TcpStream}, time::Duration,
 };
 
 const ADDRESS: &str = "127.0.0.1:3001";
@@ -22,18 +22,26 @@ fn handle_connection(mut stream: &TcpStream) {
 
     if request_line == "GET / HTTP/1.1" {
         handle_root(stream);
+    } else if request_line == "GET /sleep HTTP/1.1" {
+        handle_sleep(stream);
     } else if request_line.ends_with("HTTP/1.1") {
         handle_404(stream);
     }
 
 }
 
+fn handle_sleep(mut stream: &TcpStream) {
+    std::thread::sleep(Duration::from_secs(5));
+    let status_line = "HTTP/1.1 200 OK";
+    let content = std::fs::read_to_string("index.html").expect("index read");
+    let response = format_response(status_line, &content);
+    stream.write_all(response.as_bytes()).expect("response sleep")
+}
+
 fn handle_404(mut stream: &TcpStream) {
     let status_line = "HTTP/1.1 404 NOT FOUND";
     let content = std::fs::read_to_string("404.html").expect("404 read");
-    let content_length = content.len();
-    let headers = format!("Content-Length: {content_length}\r\n");
-    let response = format!("{status_line}\r\n{headers}\r\n{content}");
+    let response = format_response(status_line, &content);
 
     stream.write_all(response.as_bytes()).expect("response msg");
 }
@@ -41,9 +49,13 @@ fn handle_404(mut stream: &TcpStream) {
 fn handle_root(mut stream: &TcpStream) {
     let status_line = "HTTP/1.1 200 OK";
     let content = std::fs::read_to_string("index.html").expect("index read");
-    let content_length = content.len();
-    let headers = format!("Content-Length: {content_length}\r\n");
-    let response = format!("{status_line}\r\n{headers}\r\n{content}");
+    let response = format_response(status_line, &content);
 
     stream.write_all(response.as_bytes()).expect("response msg");
+}
+
+fn format_response(status_line: &str, content: &String) -> String {
+    let content_length = content.len();
+    let headers = format!("Content-Length: {content_length}\r\n");
+    return format!("{status_line}\r\n{headers}\r\n{content}");
 }

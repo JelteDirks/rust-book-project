@@ -11,7 +11,7 @@ const ADDRESS: &str = "127.0.0.1:3001";
 fn main() {
     let tcp_listener = TcpListener::bind(ADDRESS);
 
-    let t_pool = ThreadPool::new(6);
+    let t_pool = ThreadPool::new(6).expect("thread pool creation");
 
     for stream in tcp_listener.unwrap().incoming() {
         let mut stream = stream.unwrap();

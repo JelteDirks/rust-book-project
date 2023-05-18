@@ -1,5 +1,6 @@
 pub struct ThreadPool;
 
+#[derive(Debug)]
 pub enum PoolCreationError {
     UnsupportedAmount,
 }

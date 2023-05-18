@@ -1,6 +1,7 @@
 use std::{
     io::{BufRead, BufReader, Write},
-    net::{TcpListener, TcpStream}, time::Duration,
+    net::{TcpListener, TcpStream},
+    time::Duration,
 };
 
 const ADDRESS: &str = "127.0.0.1:3001";
@@ -10,9 +11,10 @@ fn main() {
 
     for stream in tcp_listener.unwrap().incoming() {
         let mut stream = stream.unwrap();
-        println!("connected to {ADDRESS}");
 
-        handle_connection(&mut stream);
+        std::thread::spawn(move || {
+            handle_connection(&mut stream);
+        });
     }
 }
 
@@ -27,7 +29,6 @@ fn handle_connection(mut stream: &TcpStream) {
     } else if request_line.ends_with("HTTP/1.1") {
         handle_404(stream);
     }
-
 }
 
 fn handle_sleep(mut stream: &TcpStream) {
@@ -35,7 +36,9 @@ fn handle_sleep(mut stream: &TcpStream) {
     let status_line = "HTTP/1.1 200 OK";
     let content = std::fs::read_to_string("index.html").expect("index read");
     let response = format_response(status_line, &content);
-    stream.write_all(response.as_bytes()).expect("response sleep")
+    stream
+        .write_all(response.as_bytes())
+        .expect("response sleep")
 }
 
 fn handle_404(mut stream: &TcpStream) {

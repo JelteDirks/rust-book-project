@@ -30,7 +30,7 @@ impl ThreadPool {
 
         let rx = Arc::new(Mutex::new(rx));
 
-        for i in 0..threads.len() {
+        for i in 0..n_threads {
             threads.push(Worker::new(i, Arc::clone(&rx)));
         }
 
@@ -60,6 +60,9 @@ struct Worker {
 impl Worker {
     fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
         let thread = thread::spawn(move || loop {
+
+            println!("Worker {id} is waiting for a job");
+
             let job = receiver
                 .lock()
                 .expect("lock receiver")

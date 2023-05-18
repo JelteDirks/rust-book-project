@@ -46,7 +46,7 @@ impl ThreadPool {
     {
         let job = Box::new(f);
 
-        let send = self.sender.send(job).unwrap();
+        self.sender.send(job).unwrap();
     }
 }
 

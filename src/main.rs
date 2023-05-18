@@ -13,7 +13,7 @@ fn main() {
 
     let t_pool = ThreadPool::new(6).expect("thread pool creation");
 
-    for stream in tcp_listener.unwrap().incoming().take(2) {
+    for stream in tcp_listener.unwrap().incoming() {
         let stream = stream.unwrap();
 
         t_pool.handle(|| {
